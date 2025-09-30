@@ -1,11 +1,15 @@
 import React from 'react';
+import { useState } from 'react';
 import { Server } from '../types/build';
+import ServerModal from './ServerModal';
 
 interface RackVisualizationProps {
   servers: Server[];
 }
 
 const RackVisualization: React.FC<RackVisualizationProps> = ({ servers }) => {
+  const [selectedServer, setSelectedServer] = useState<string | null>(null);
+
   // Separate normal racks from small racks and group by rack identifier
   const rackGroups = servers.reduce((acc, server) => {
     const rackIdentifier = server.rackID.split('-')[0];
@@ -70,6 +74,7 @@ const RackVisualization: React.FC<RackVisualizationProps> = ({ servers }) => {
   };
 
   return (
+    <>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {orderedRacks.map(rackId => {
         const rackServers = rackGroups[rackId] || [];
@@ -99,7 +104,8 @@ const RackVisualization: React.FC<RackVisualizationProps> = ({ servers }) => {
                     {slotGroups[slot].map(server => (
                       <div
                         key={server.dbid}
-                        className="bg-gray-700 rounded p-2 border-l-4 border-gray-600"
+                        className="bg-gray-700 hover:bg-gray-650 rounded p-2 border-l-4 border-gray-600 cursor-pointer transition-colors duration-200"
+                        onClick={() => setSelectedServer(server.hostname)}
                         style={{
                           borderLeftColor: `var(--progress-color-${Math.floor(server.percent_built / 10)})`
                         }}
@@ -120,10 +126,8 @@ const RackVisualization: React.FC<RackVisualizationProps> = ({ servers }) => {
                           />
                         </div>
                         
-                        <div className="text-xs text-gray-400 space-y-0.5">
-                          <div>Type: {server.machine_type}</div>
-                          <div>DBID: {server.dbid}</div>
-                          <div>S/N: {server.serial_number}</div>
+                        <div className="text-xs text-gray-400">
+                          <div>Type: {server.machine_type} • DBID: {server.dbid} • S/N: {server.serial_number}</div>
                         </div>
                       </div>
                     ))}
@@ -134,6 +138,13 @@ const RackVisualization: React.FC<RackVisualizationProps> = ({ servers }) => {
         );
       })}
     </div>
+    
+    <ServerModal
+      hostname={selectedServer || ''}
+      isOpen={!!selectedServer}
+      onClose={() => setSelectedServer(null)}
+    />
+    </>
   );
 };
 
