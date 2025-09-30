@@ -310,7 +310,6 @@ const AssignPage: React.FC = () => {
           )}
         </div>
       )}
-      </div>
     </div>
   );
 };
