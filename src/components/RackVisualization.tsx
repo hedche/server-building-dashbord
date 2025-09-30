@@ -6,15 +6,40 @@ interface RackVisualizationProps {
 }
 
 const RackVisualization: React.FC<RackVisualizationProps> = ({ servers }) => {
-  // Group servers by rack number (1-8)
+  // Separate normal racks from small racks and group by rack identifier
   const rackGroups = servers.reduce((acc, server) => {
-    const rackNumber = server.rackID.split('-')[0];
-    if (!acc[rackNumber]) {
-      acc[rackNumber] = [];
+    const rackIdentifier = server.rackID.split('-')[0];
+    if (!acc[rackIdentifier]) {
+      acc[rackIdentifier] = [];
     }
-    acc[rackNumber].push(server);
+    acc[rackIdentifier].push(server);
     return acc;
   }, {} as Record<string, Server[]>);
+
+  // Separate normal racks (1-8) from small racks (S1, S2, etc.)
+  const normalRacks: string[] = [];
+  const smallRacks: string[] = [];
+  
+  Object.keys(rackGroups).forEach(rackId => {
+    if (rackId.startsWith('S')) {
+      smallRacks.push(rackId);
+    } else {
+      normalRacks.push(rackId);
+    }
+  });
+  
+  // Sort normal racks numerically (1-8)
+  normalRacks.sort((a, b) => parseInt(a) - parseInt(b));
+  
+  // Sort small racks by number (S1, S2, etc.)
+  smallRacks.sort((a, b) => {
+    const aNum = parseInt(a.substring(1));
+    const bNum = parseInt(b.substring(1));
+    return aNum - bNum;
+  });
+  
+  // Combine normal racks first, then small racks
+  const orderedRacks = [...normalRacks, ...smallRacks];
 
   // Sort rack positions: 1-8, then A-G
   const sortRackPosition = (a: string, b: string) => {
@@ -26,19 +51,28 @@ const RackVisualization: React.FC<RackVisualizationProps> = ({ servers }) => {
   };
 
   const getProgressColor = (percent: number) => {
-    if (percent >= 90) return 'bg-green-500';
-    if (percent >= 70) return 'bg-blue-500';
-    if (percent >= 50) return 'bg-yellow-500';
-    if (percent >= 25) return 'bg-orange-500';
-    return 'bg-red-500';
+    if (percent === 100) return 'bg-green-500';
+    return 'bg-blue-500';
+  };
+
+  const getProgressColorForServer = (server: Server) => {
+    if (server.status === 'failed') return 'bg-red-500';
+    if (server.percent_built === 100) return 'bg-green-500';
+    return 'bg-blue-500';
+  };
+
+  const getRackTitle = (rackId: string) => {
+    if (rackId.startsWith('S')) {
+      const rackNumber = rackId.substring(1);
+      return `Small Rack ${rackNumber}`;
+    }
+    return `Rack ${rackId}`;
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {Array.from({ length: 8 }, (_, i) => i + 1).map(rackNumber => {
-        const rackServers = rackGroups[rackNumber.toString()] || [];
-        
-        // Group by slot position
+      {orderedRacks.map(rackId => {
+        const rackServers = rackGroups[rackId] || [];
         const slotGroups = rackServers.reduce((acc, server) => {
           const slot = server.rackID.split('-')[1];
           if (!acc[slot]) {
@@ -51,17 +85,12 @@ const RackVisualization: React.FC<RackVisualizationProps> = ({ servers }) => {
         const sortedSlots = Object.keys(slotGroups).sort(sortRackPosition);
 
         return (
-          <div key={rackNumber} className="bg-gray-800 rounded-lg border border-gray-700 p-3">
+          <div key={rackId} className="bg-gray-800 rounded-lg border border-gray-700 p-3">
             <h3 className="text-green-400 font-mono font-bold mb-3 text-center">
-              Rack {rackNumber}
+              {getRackTitle(rackId)}
             </h3>
             
-            {rackServers.length === 0 ? (
-              <div className="text-gray-500 text-center py-4 text-xs">
-                No servers installing
-              </div>
-            ) : (
-              <div className="space-y-2">
+            <div className="space-y-2">
                 {sortedSlots.map(slot => (
                   <div key={slot} className="space-y-1">
                     <div className="text-xs text-gray-400 font-mono">
@@ -86,22 +115,21 @@ const RackVisualization: React.FC<RackVisualizationProps> = ({ servers }) => {
                         
                         <div className="w-full bg-gray-600 rounded-full h-1.5 mb-2">
                           <div
-                            className={`h-1.5 rounded-full transition-all duration-300 ${getProgressColor(server.percent_built)}`}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${getProgressColorForServer(server)}`}
                             style={{ width: `${server.percent_built}%` }}
                           />
                         </div>
                         
                         <div className="text-xs text-gray-400 space-y-0.5">
-                          <div>DB: {server.dbid}</div>
-                          <div>SN: {server.serial_number}</div>
-                          <div className="capitalize">{server.assigned_status}</div>
+                          <div>Type: {server.machine_type}</div>
+                          <div>DBID: {server.dbid}</div>
+                          <div>S/N: {server.serial_number}</div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ))}
-              </div>
-            )}
+            </div>
           </div>
         );
       })}

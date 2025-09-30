@@ -5,6 +5,8 @@ export interface Server {
   serial_number: string;
   percent_built: number;
   assigned_status: string;
+  machine_type: string;
+  status: string;
 }
 
 export interface BuildStatus {
