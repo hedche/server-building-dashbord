@@ -1,31 +1,35 @@
 import { useState } from 'react';
+import { Server } from '../types/build';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://test-backend.suntrap.workers.dev';
 const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
 
 interface AssignPayload {
-  serial_numbers: string[];
-  hostnames: string[];
-  dbids: string[];
+  serial_number: string;
+  hostname: string;
+  dbid: string;
+}
+
+export type AssignmentStatus = 'idle' | 'loading' | 'success' | 'failed';
+
+interface AssignmentState {
+  [dbid: string]: AssignmentStatus;
 }
 
 export const useAssignServers = () => {
-  const [isAssigning, setIsAssigning] = useState(false);
+  const [assignmentStates, setAssignmentStates] = useState<AssignmentState>({});
   const [error, setError] = useState<string | null>(null);
 
-  const assignServers = async (payload: AssignPayload) => {
+  const assignSingleServer = async (payload: AssignPayload): Promise<boolean> => {
     if (DEV_MODE) {
-      setIsAssigning(true);
-      // Simulate API delay
-      setTimeout(() => {
-        setIsAssigning(false);
-        console.log('Dev mode: Would assign servers:', payload);
-      }, 1000);
-      return true;
+      // Simulate API delay and random success/failure
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+      const success = Math.random() > 0.3; // 70% success rate
+      console.log('Dev mode: Would assign server:', payload, success ? 'SUCCESS' : 'FAILED');
+      return success;
     }
 
     try {
-      setIsAssigning(true);
       setError(null);
       
       const response = await fetch(`${BACKEND_URL}/api/assign`, {
@@ -37,22 +41,56 @@ export const useAssignServers = () => {
         body: JSON.stringify(payload),
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return true;
+      const result = await response.json();
+      return result.status === 'success';
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to assign servers');
+      console.error('Assignment failed:', err);
       return false;
-    } finally {
-      setIsAssigning(false);
     }
+  };
+
+  const assignServers = async (servers: Server[]) => {
+    setError(null);
+    
+    // Initialize all servers to loading state
+    const initialStates: AssignmentState = {};
+    servers.forEach(server => {
+      initialStates[server.dbid] = 'loading';
+    });
+    setAssignmentStates(initialStates);
+
+    // Process each server sequentially
+    for (const server of servers) {
+      try {
+        const payload = {
+          serial_number: server.serial_number,
+          hostname: server.hostname,
+          dbid: server.dbid,
+        };
+
+        const success = await assignSingleServer(payload);
+        
+        setAssignmentStates(prev => ({
+          ...prev,
+          [server.dbid]: success ? 'success' : 'failed'
+        }));
+      } catch (err) {
+        setAssignmentStates(prev => ({
+          ...prev,
+          [server.dbid]: 'failed'
+        }));
+      }
+    }
+
+    // Clear states after a delay to allow user to see results
+    setTimeout(() => {
+      setAssignmentStates({});
+    }, 3000);
   };
 
   return {
     assignServers,
-    isAssigning,
+    assignmentStates,
     error,
   };
 };

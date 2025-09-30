@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { UserCheck, RefreshCw, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
+import { UserCheck, RefreshCw, AlertCircle, ChevronUp, ChevronDown, Check, X } from 'lucide-react';
 import { useBuildHistory } from '../hooks/useBuildHistory';
-import { useAssignServers } from '../hooks/useAssignServers';
+import { useAssignServers, AssignmentStatus } from '../hooks/useAssignServers';
 import { Region, Server } from '../types/build';
 
 const regions: { value: Region; label: string }[] = [
@@ -23,7 +23,7 @@ const AssignPage: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
   const { buildHistory, isLoading, error, refetch } = useBuildHistory(selectedDate);
-  const { assignServers, isAssigning, error: assignError } = useAssignServers();
+  const { assignServers, assignmentStates, error: assignError } = useAssignServers();
 
   const currentRegionData = buildHistory ? buildHistory[selectedRegion.toLowerCase() as keyof typeof buildHistory] || [] : [];
   
@@ -97,18 +97,29 @@ const AssignPage: React.FC = () => {
       selectedServers.has(server.dbid)
     );
     
-    const payload = {
-      serial_numbers: serversToAssign.map(server => server.serial_number),
-      hostnames: serversToAssign.map(server => server.hostname),
-      dbids: serversToAssign.map(server => server.dbid),
-    };
+    await assignServers(serversToAssign);
+    setSelectedServers(new Set());
     
-    const success = await assignServers(payload);
-    if (success) {
-      setSelectedServers(new Set());
+    // Refresh data after assignment is complete
+    setTimeout(() => {
       refetch();
+    }, 3500);
+  };
+
+  const getAssignmentIcon = (status: AssignmentStatus) => {
+    switch (status) {
+      case 'loading':
+        return <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>;
+      case 'success':
+        return <Check size={16} className="text-green-400" />;
+      case 'failed':
+        return <X size={16} className="text-red-400" />;
+      default:
+        return null;
     }
   };
+
+  const isAssigning = Object.values(assignmentStates).some(status => status === 'loading');
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return null;
@@ -253,12 +264,18 @@ const AssignPage: React.FC = () => {
                     {sortedUnassignedServers.map((server) => (
                       <tr key={server.dbid} className="border-t border-gray-700 hover:bg-gray-750">
                         <td className="px-4 py-3">
-                          <input
-                            type="checkbox"
-                            checked={selectedServers.has(server.dbid)}
-                            onChange={() => handleServerSelect(server.dbid)}
-                            className="rounded border-gray-600 bg-gray-700 text-green-600 focus:ring-green-500"
-                          />
+                          {assignmentStates[server.dbid] ? (
+                            <div className="flex justify-center">
+                              {getAssignmentIcon(assignmentStates[server.dbid])}
+                            </div>
+                          ) : (
+                            <input
+                              type="checkbox"
+                              checked={selectedServers.has(server.dbid)}
+                              onChange={() => handleServerSelect(server.dbid)}
+                              className="rounded border-gray-600 bg-gray-700 text-green-600 focus:ring-green-500"
+                            />
+                          )}
                         </td>
                         <td className="px-4 py-3 text-gray-300 font-mono text-sm">{server.rackID}</td>
                         <td className="px-4 py-3 text-gray-300 font-mono text-sm">Server</td>
