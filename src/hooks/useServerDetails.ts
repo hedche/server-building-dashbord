@@ -67,12 +67,10 @@ export const useServerDetails = () => {
       setError(null);
       
       const response = await fetch(`${BACKEND_URL}/api/server-details`, {
-        method: 'GET',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ hostname }),
       });
       
       if (!response.ok) {
