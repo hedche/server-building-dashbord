@@ -95,17 +95,17 @@ const PreconfigPage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {regions.map(region => (
                   <button
                     key={region.name}
                     onClick={() => pushPreconfig(region.depot)}
                     disabled={pushStatus !== 'idle'}
-                    className="flex flex-col items-center p-4 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-lg transition-colors"
+                    className="flex flex-col items-center p-3 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-lg transition-colors"
                   >
-                    <span className="font-mono font-semibold">{region.name}</span>
-                    <span className="text-sm opacity-90">{region.label}</span>
-                    <span className="text-xs mt-1">Push Preconfig</span>
+                    <span className="font-mono font-semibold text-sm">{region.name}</span>
+                    <span className="text-xs opacity-90">{region.label}</span>
+                    <span className="text-xs mt-0.5">Push Preconfig</span>
                   </button>
                 ))}
               </div>

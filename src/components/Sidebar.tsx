@@ -5,7 +5,8 @@ import {
   X, 
   BarChart3, 
   Settings, 
-  UserCheck 
+  UserCheck,
+  FileText
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,6 +29,11 @@ const navigationItems = [
     name: 'Assign',
     path: '/assign',
     icon: UserCheck,
+  },
+  {
+    name: 'Build Logs',
+    path: '/build-logs',
+    icon: FileText,
   },
 ];
 

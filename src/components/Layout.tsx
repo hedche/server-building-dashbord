@@ -8,7 +8,7 @@ import { Code } from 'lucide-react';
 const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
 
 const Layout: React.FC = () => {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const navigate = useNavigate();
 
   const toggleSidebar = () => {

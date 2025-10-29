@@ -8,6 +8,7 @@ import AuthCallbackPage from './pages/AuthCallbackPage';
 import BuildOverviewPage from './pages/BuildOverviewPage';
 import PreconfigPage from './pages/PreconfigPage';
 import AssignPage from './pages/AssignPage';
+import BuildLogsPage from './pages/BuildLogsPage';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="dashboard" element={<BuildOverviewPage />} />
             <Route path="preconfig" element={<PreconfigPage />} />
             <Route path="assign" element={<AssignPage />} />
+            <Route path="build-logs" element={<BuildLogsPage />} />
           </Route>
           
           {/* Catch all route */}
