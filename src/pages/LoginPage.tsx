@@ -22,7 +22,6 @@ const LoginPage: React.FC = () => {
               <Shield size={40} className="text-white" />
             </div>
           </div>
-          <h2 className="text-3xl font-bold text-white font-mono">SAML Portal</h2>
           <h2 className="text-3xl font-bold text-white font-mono">{import.meta.env.VITE_APP_NAME || 'Server Dashboard'}</h2>
           <p className="mt-2 text-gray-400 font-mono">
             Secure authentication required
