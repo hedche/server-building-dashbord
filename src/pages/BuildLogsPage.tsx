@@ -52,8 +52,8 @@ const BuildLogsPage: React.FC = () => {
           <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
             <h2 className="text-lg font-semibold text-white font-mono mb-4">Search Build Logs</h2>
             <div className="max-w-md">
-              <HostnameSearch 
-                hostnames={hostnames} 
+              <HostnameSearch
+                hostnames={hostnames}
                 onHostnameSelect={handleHostnameSelect}
               />
             </div>
@@ -61,13 +61,12 @@ const BuildLogsPage: React.FC = () => {
               Search from {hostnames.length.toLocaleString()} available hostnames
             </p>
           </div>
-          
+
           <div className="bg-gray-800 rounded-lg border border-gray-700 p-8 text-center">
             <p className="text-gray-400 font-mono">Select a hostname to view build logs</p>
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 };
