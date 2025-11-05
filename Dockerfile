@@ -10,7 +10,7 @@ COPY package*.json ./
 
 # Install dependencies with clean install for reproducible builds
 # --omit=dev excludes devDependencies in production
-RUN npm ci --only=production --ignore-scripts && \
+RUN npm ci --ignore-scripts && \
     npm cache clean --force
 
 # Copy application source
