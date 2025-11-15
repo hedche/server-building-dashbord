@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://test-backend.suntrap.workers.dev';
-const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
+import { fetchWithFallback } from '../utils/api';
 
 interface Preconfig {
   id: string;
@@ -50,32 +48,17 @@ export const usePreconfigs = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchPreconfigs = async () => {
-    if (DEV_MODE) {
-      setIsLoading(true);
-      // Simulate API delay
-      setTimeout(() => {
-        setPreconfigs(mockPreconfigs);
-        setIsLoading(false);
-      }, 1000);
-      return;
-    }
-
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetch(`${BACKEND_URL}/api/preconfigs`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
+
+      // Try backend first, fall back to mock data in dev mode if unreachable
+      const data = await fetchWithFallback<Preconfig[]>(
+        '/api/preconfigs',
+        { credentials: 'include' },
+        mockPreconfigs
+      );
+
       setPreconfigs(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch preconfigs');

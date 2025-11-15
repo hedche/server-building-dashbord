@@ -84,6 +84,16 @@ npm run preview
 ```
 
 ### Building Docker images (dev and prod)
+#### Dev
+Build the production image (static build, VITE_BACKEND_URL set at build time):
+```bash
+docker build \
+  --build-arg VITE_BACKEND_URL=https://api.example.com \
+  --build-arg VITE_DEV_MODE=true \
+  -t server-dashboard:dev .
+```
+
+#### Prod
 
 Build the production image (static build, VITE_BACKEND_URL set at build time):
 ```bash
@@ -94,6 +104,7 @@ docker build \
 # optional explicit target: --target production
 ```
 
+#### Docker run
 Test it out with:
 ```
 docker run -d --restart=unless-stopped -p 8080:8080 --name server-dashboard-prod server-dashboard:prod

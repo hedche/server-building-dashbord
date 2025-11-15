@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://test-backend.suntrap.workers.dev';
-const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
+import { fetchWithFallback } from '../utils/api';
 
 interface ServerDetails {
   hostname: string;
@@ -49,36 +47,17 @@ export const useServerDetails = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchServerDetails = React.useCallback(async (hostname: string) => {
-    if (DEV_MODE) {
-      setIsLoading(true);
-      setError(null);
-      // Simulate API delay
-      setTimeout(() => {
-        setServerDetails({
-          ...mockServerDetails,
-          hostname,
-        });
-        setIsLoading(false);
-      }, 1000);
-      return;
-    }
-
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetch(`${BACKEND_URL}/api/server-details?hostname=${encodeURIComponent(hostname)}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
+
+      // Try backend first, fall back to mock data in dev mode if unreachable
+      const data = await fetchWithFallback<ServerDetails>(
+        `/api/server-details?hostname=${encodeURIComponent(hostname)}`,
+        { credentials: 'include' },
+        { ...mockServerDetails, hostname }
+      );
+
       setServerDetails(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch server details');

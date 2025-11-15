@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, AuthState } from '../types/auth';
+import { fetchWithFallback, getBackendUrl, isDevMode } from '../utils/api';
 
 interface AuthContextType extends AuthState {
   login: () => void;
@@ -9,41 +10,35 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://test-backend.suntrap.workers.dev';
-const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
+const BACKEND_URL = getBackendUrl();
+const DEV_MODE = isDevMode();
+
+// Mock user for dev mode fallback
+const mockUser: User = {
+  id: 'dev-user',
+  email: 'dev@example.com',
+  name: 'Dev User',
+  role: 'developer'
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const checkAuth = async () => {
-    if (DEV_MODE) {
-      // In dev mode, simulate an authenticated user
-      setUser({
-        id: 'dev-user',
-        email: 'dev@example.com',
-        name: 'Dev User',
-        role: 'developer'
-      });
-      setIsLoading(false);
-      return;
-    }
-
     try {
       setIsLoading(true);
-      const response = await fetch(`${BACKEND_URL}/me`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
+
+      // Try backend first, fall back to mock user in dev mode if unreachable
+      const userData = await fetchWithFallback<User>(
+        '/me',
+        {
+          credentials: 'include',
         },
-      });
-      
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      } else {
-        setUser(null);
-      }
+        mockUser
+      );
+
+      setUser(userData);
     } catch (error) {
       console.error('Auth check failed:', error);
       setUser(null);

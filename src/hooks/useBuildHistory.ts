@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Server, Region } from '../types/build';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://test-backend.suntrap.workers.dev';
-const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
+import { fetchWithFallback } from '../utils/api';
 
 // Mock data for dev mode - mix of assigned and unassigned servers
 const mockBuildHistory: Record<string, Server[]> = {
@@ -31,32 +29,17 @@ export const useBuildHistory = (date: string) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchBuildHistory = async () => {
-    if (DEV_MODE) {
-      setIsLoading(true);
-      // Simulate API delay
-      setTimeout(() => {
-        setBuildHistory(mockBuildHistory);
-        setIsLoading(false);
-      }, 1000);
-      return;
-    }
-
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetch(`${BACKEND_URL}/api/build-history/${date}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
+
+      // Try backend first, fall back to mock data in dev mode if unreachable
+      const data = await fetchWithFallback<Record<string, Server[]>>(
+        `/api/build-history/${date}`,
+        { credentials: 'include' },
+        mockBuildHistory
+      );
+
       setBuildHistory(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch build history');

@@ -1,7 +1,5 @@
 import { useState } from 'react';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://test-backend.suntrap.workers.dev';
-const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
+import { fetchWithFallback } from '../utils/api';
 
 export type PushStatus = 'idle' | 'pushing' | 'success' | 'failed';
 
@@ -10,27 +8,26 @@ export const usePushPreconfig = () => {
   const [error, setError] = useState<string | null>(null);
 
   const pushPreconfig = async (depot: number): Promise<boolean> => {
-    if (DEV_MODE) {
-      // Simulate API delay and random success/failure
-      await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 1000));
-      const success = Math.random() > 0.2; // 80% success rate
-      console.log('Dev mode: Would push preconfig for depot:', depot, success ? 'SUCCESS' : 'FAILED');
-      return success;
-    }
-
     try {
       setError(null);
-      
-      const response = await fetch(`${BACKEND_URL}/api/push-preconfig`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
+
+      // Mock response for fallback in dev mode
+      const mockResponse = {
+        status: Math.random() > 0.2 ? 'success' : 'error', // 80% success rate
+        message: 'Mock push (backend unreachable)'
+      };
+
+      // Try backend first, fall back to mock in dev mode if unreachable
+      const result = await fetchWithFallback<{ status: string; message: string }>(
+        '/api/push-preconfig',
+        {
+          method: 'POST',
+          credentials: 'include',
+          body: JSON.stringify({ depot }),
         },
-        body: JSON.stringify({ depot }),
-      });
-      
-      const result = await response.json();
+        mockResponse
+      );
+
       return result.status === 'success';
     } catch (err) {
       console.error('Push preconfig failed:', err);

@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Server } from '../types/build';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://test-backend.suntrap.workers.dev';
-const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
+import { fetchWithFallback } from '../utils/api';
 
 interface AssignPayload {
   serial_number: string;
@@ -21,27 +19,26 @@ export const useAssignServers = () => {
   const [error, setError] = useState<string | null>(null);
 
   const assignSingleServer = async (payload: AssignPayload): Promise<boolean> => {
-    if (DEV_MODE) {
-      // Simulate API delay and random success/failure
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-      const success = Math.random() > 0.3; // 70% success rate
-      console.log('Dev mode: Would assign server:', payload, success ? 'SUCCESS' : 'FAILED');
-      return success;
-    }
-
     try {
       setError(null);
-      
-      const response = await fetch(`${BACKEND_URL}/api/assign`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
+
+      // Mock response for fallback in dev mode
+      const mockResponse = {
+        status: Math.random() > 0.3 ? 'success' : 'error', // 70% success rate
+        message: 'Mock assignment (backend unreachable)'
+      };
+
+      // Try backend first, fall back to mock in dev mode if unreachable
+      const result = await fetchWithFallback<{ status: string; message: string }>(
+        '/api/assign',
+        {
+          method: 'POST',
+          credentials: 'include',
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
-      
-      const result = await response.json();
+        mockResponse
+      );
+
       return result.status === 'success';
     } catch (err) {
       console.error('Assignment failed:', err);
