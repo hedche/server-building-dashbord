@@ -1,0 +1,34 @@
+# Application Configuration
+APP_NAME=Server Building Dashboard
+ENVIRONMENT=development
+DEBUG=false
+
+# Security - GENERATE A SECURE SECRET KEY
+# Use: python -c "import secrets; print(secrets.token_urlsafe(32))"
+SECRET_KEY=your-secret-key-here-change-this-in-production
+
+# Session Configuration
+SESSION_LIFETIME_SECONDS=28800
+COOKIE_DOMAIN=
+
+# CORS Origins (comma-separated)
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# Frontend URL
+FRONTEND_URL=http://localhost:5173
+
+# SAML2 Configuration
+SAML_METADATA_PATH=./saml_metadata/idp_metadata.xml
+SAML_ENTITY_ID=https://your-backend-domain.com
+SAML_ACS_URL=https://your-backend-domain.com/auth/callback
+SAML_SLS_URL=
+
+# Rate Limiting
+RATE_LIMIT_PER_MINUTE=60
+RATE_LIMIT_BURST=100
+
+# Logging
+LOG_LEVEL=INFO
+
+# Database (optional - for future use)
+DATABASE_URL=

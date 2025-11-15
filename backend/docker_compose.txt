@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: server-dashboard-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount SAML metadata directory
+      - ./saml_metadata:/app/saml_metadata:ro
+      # Mount .env file (don't commit actual .env to git)
+      - ./.env:/app/.env:ro
+    environment:
+      - ENVIRONMENT=production
+    restart: unless-stopped
+    networks:
+      - backend-network
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.cache
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  backend-network:
+    driver: bridge
