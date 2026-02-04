@@ -201,6 +201,7 @@ def log_startup():
         "SECRET_KEY",
         "DATABASE_URL",  # May contain passwords
         "REDIS_URL",  # May contain passwords
+        "PRECONFIG_API_PSK",  # Pre-shared key for preconfig API
     }
 
     # Log all non-sensitive configuration

@@ -19,7 +19,7 @@ class TestHealthEndpoint:
 
         assert data["status"] == "healthy"
         assert "timestamp" in data
-        assert data["version"] == "1.0.0"
+        # Note: version intentionally not included in health endpoint (security hardening)
 
         # Verify timestamp is valid ISO format
         datetime.fromisoformat(data["timestamp"])

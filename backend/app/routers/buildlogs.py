@@ -125,6 +125,12 @@ def get_log_file_path(hostname: str) -> tuple[Path, str]:
             logger.debug(f"[BUILDLOG]   ✗ Path resolution failed (security violation)")
             continue
 
+        # Security: Reject symlinks to prevent following links outside BUILD_LOGS_DIR
+        if resolved_path.is_symlink():
+            logger.warning(f"Symlink detected, skipping: {resolved_path}")
+            logger.debug(f"[BUILDLOG]   ✗ Symlink detected - security violation")
+            continue
+
         # Check if file exists and is a regular file
         if resolved_path.exists() and resolved_path.is_file():
             logger.info(f"Found log for {hostname} in build_server: {build_server_name}")

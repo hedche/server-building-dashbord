@@ -277,17 +277,17 @@ class SAMLAuth:
             + timedelta(seconds=settings.SESSION_LIFETIME_SECONDS),
         }
 
-        logger.info(f"Session created for user: {user_data['email']}, token: {session_token[:16]}..., total sessions: {len(_sessions)}")
+        logger.info(f"Session created for user: {user_data['email']}, total sessions: {len(_sessions)}")
 
     def get_session(self, session_token: str) -> Dict[str, Any] | None:
         """
         Retrieve session data
         Returns None if session doesn't exist or is expired
         """
-        logger.debug(f"Looking up session token: {session_token[:16]}... (total sessions: {len(_sessions)})")
+        logger.debug(f"Looking up session (total sessions: {len(_sessions)})")
 
         if session_token not in _sessions:
-            logger.warning(f"Session token not found in store. Available tokens: {[t[:16] for t in _sessions.keys()]}")
+            logger.warning("Session token not found in store")
             return None
 
         session = _sessions[session_token]

@@ -189,8 +189,8 @@ app.add_middleware(
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-    expose_headers=["*"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-Request-ID"],
+    expose_headers=["Content-Type", "X-Request-ID", "X-Build-Server"],
     max_age=3600,
 )
 
@@ -210,7 +210,6 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0",
     }
 
 
@@ -276,7 +275,9 @@ async def saml_callback(request: Request, response: Response):
         # Since we're on HTTP in dev, we can't use samesite=none.
         # Instead, use samesite=lax and rely on CORS + credentials
         samesite_value = "lax"
-        secure_value = is_production
+        # Use secure cookies in production OR when behind HTTPS proxy (X-Forwarded-Proto)
+        forwarded_proto = request.headers.get("X-Forwarded-Proto", "").lower()
+        secure_value = is_production or forwarded_proto == "https"
 
         redirect_response.set_cookie(
             key="session_token",
@@ -290,7 +291,7 @@ async def saml_callback(request: Request, response: Response):
         )
 
         app_logger.info(
-            f"Setting cookie: token={session_token[:16]}..., domain={cookie_domain}, path=/, samesite={samesite_value}, secure={secure_value}, httponly=True"
+            f"Setting session cookie: domain={cookie_domain}, path=/, samesite={samesite_value}, secure={secure_value}, httponly=True"
         )
         app_logger.info(f"Redirecting to: {settings.FRONTEND_URL}/auth/callback")
 

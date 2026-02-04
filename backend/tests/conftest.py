@@ -10,6 +10,7 @@ from main import app
 from app.auth import saml_auth, _sessions
 from app.routers.config import get_config
 from app.correlation import correlation_id_var
+from app.middleware import RateLimitMiddleware
 
 
 def get_valid_regions() -> list:
@@ -198,6 +199,29 @@ def reset_correlation_id():
     correlation_id_var.set(None)
     yield
     correlation_id_var.set(None)
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter(test_app):
+    """
+    Reset rate limiter state before each test to prevent rate limit
+    errors from accumulating across tests
+    """
+    def find_and_clear_rate_limiter(app_obj):
+        """Traverse middleware stack to find and clear RateLimitMiddleware"""
+        current = app_obj
+        visited = set()
+        while current is not None and id(current) not in visited:
+            visited.add(id(current))
+            if isinstance(current, RateLimitMiddleware):
+                current.requests.clear()
+                return
+            # Try common attributes that hold the next middleware/app
+            current = getattr(current, 'app', None)
+
+    find_and_clear_rate_limiter(test_app.middleware_stack)
+    yield
+    find_and_clear_rate_limiter(test_app.middleware_stack)
 
 
 @pytest.fixture

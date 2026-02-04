@@ -145,12 +145,12 @@ class Settings(BaseSettings):
             },
             "security": {
                 "nameIdEncrypted": False,
-                "authnRequestsSigned": False,
+                "authnRequestsSigned": True,  # Sign auth requests for integrity
                 "logoutRequestSigned": False,
                 "logoutResponseSigned": False,
                 "signMetadata": False,
                 "wantMessagesSigned": False,
-                "wantAssertionsSigned": False,
+                "wantAssertionsSigned": True,  # Require signed assertions to prevent tampering
                 "wantAssertionsEncrypted": False,
                 "wantNameIdEncrypted": False,
                 "requestedAuthnContext": False,  # Accept any authentication method (MFA, passwordless, etc.)
