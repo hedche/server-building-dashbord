@@ -64,6 +64,7 @@ ${BLUE}Commands:${NC}
   restart   Restart all services
   rebuild   Rebuild images and restart all services
   logs      Show logs from all services (use -f to follow)
+  status    Show status of all services
   help      Show this help message
 
 ${BLUE}Examples:${NC}
@@ -71,6 +72,7 @@ ${BLUE}Examples:${NC}
   ./docker.sh prod rebuild    # Rebuild and start production (all services)
   ./docker.sh stop            # Stop production (default env)
   ./docker.sh dev restart     # Restart development environment
+  ./docker.sh dev status      # Show status of development services
   ./docker.sh logs -f         # Follow logs from all services
 
 ${BLUE}Services:${NC}
@@ -207,6 +209,15 @@ do_logs() {
     $compose_cmd -f "$COMPOSE_FILE" logs "$@"
 }
 
+# Function to show status
+do_status() {
+    print_info "Status of $ENV environment:"
+    local compose_cmd=$(get_compose_cmd)
+
+    cd "$SCRIPT_DIR"
+    $compose_cmd -f "$COMPOSE_FILE" ps
+}
+
 # Parse arguments
 if [ $# -eq 0 ]; then
     print_error "No command specified"
@@ -256,6 +267,10 @@ case "$COMMAND" in
     logs)
         check_requirements
         do_logs "$@"
+        ;;
+    status)
+        check_requirements
+        do_status
         ;;
     help|--help|-h)
         show_help
